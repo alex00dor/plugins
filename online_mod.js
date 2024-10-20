@@ -16430,7 +16430,6 @@
     console.log('App', 'is local:', isLocal);
 
     if (!Utils.isDebug()) {
-      Lampa.Storage.set('online_mod_proxy_rezka2', 'false');
       Lampa.Storage.set('online_mod_proxy_kinobase', 'false');
       Lampa.Storage.set('online_mod_proxy_collaps', 'false');
       Lampa.Storage.set('online_mod_proxy_cdnmovies', 'false');
