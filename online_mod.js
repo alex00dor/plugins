@@ -1,4 +1,4 @@
-//26.10.2024 - Fix
+//27.10.2024 - Fix
 
 (function () {
     'use strict';
@@ -49,7 +49,7 @@
 
     function rezka2Mirror() {
       var url = Lampa.Storage.get('online_mod_rezka2_mirror', '') + '';
-      if (!url) return 'https://hdrezka.la';
+      if (!url) return 'https://kvk.zone';
       if (url.indexOf('://') == -1) url = 'https://' + url;
       if (url.charAt(url.length - 1) === '/') url = url.substring(0, url.length - 1);
       return url;
@@ -78,7 +78,7 @@
     function proxy(name) {
       var ip = getMyIp() || '';
       var param_ip = Lampa.Storage.field('online_mod_proxy_find_ip') === true ? 'ip' + ip + '/' : '';
-      var proxy1 = 'https://cors.nb557.workers.dev/';
+      var proxy1 = 'https://cors.nb557.workers.dev:8443/';
       var proxy2 = (window.location.protocol === 'https:' ? 'https://' : 'http://') + 'iqslgbok.deploy.cx/?';
       var proxy3 = 'https://cors557.deno.dev/';
       var proxy_apn0 = (window.location.protocol === 'https:' ? 'https://' : 'http://') + 'byzkhkgr.deploy.cx/';
@@ -169,7 +169,7 @@
     function get(method, oncomplite, onerror) {
       var use_proxy = total_cnt >= 10 && good_cnt > total_cnt / 2;
       if (!use_proxy) total_cnt++;
-      var kp_prox = 'https://cors.kp556.workers.dev/';
+      var kp_prox = 'https://cors.kp556.workers.dev:8443/';
       var url = 'https://kinopoiskapiunofficial.tech/';
       url += method;
       network$1.timeout(15000);
@@ -1461,9 +1461,10 @@
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
       } : {};
       var cookie = Lampa.Storage.get('online_mod_rezka2_cookie', '') + '';
-      if (cookie.indexOf('PHPSESSID=') == -1) cookie = 'PHPSESSID=' + Utils.randomId(26) + (cookie ? '; ' + cookie : '');
 
       if (cookie) {
+        if (cookie.indexOf('PHPSESSID=') == -1) cookie = 'PHPSESSID=' + Utils.randomId(26) + (cookie ? '; ' + cookie : '');
+
         if (Lampa.Platform.is('android') && !logged_in) {
           headers.Cookie = cookie;
         } else if (prox) {
@@ -1479,6 +1480,7 @@
         voice_name: '',
         season_id: ''
       };
+      var authorization_required = false;
       /**
        * Поиск
        * @param {Object} _object
@@ -1502,6 +1504,8 @@
           network.timeout(10000);
           network_call(prox + url, function (str) {
             str = (str || '').replace(/\n/g, '');
+            var login_form = str.match(/<form id="check-form" class="check-form" method="post" action="\/ajax\/login\/">/);
+            authorization_required = !!login_form;
             var links = str.match(/<div class="b-content__inline_item-link">\s*<a [^>]*>[^<]*<\/a>\s*<div>[^<]*<\/div>\s*<\/div>/g);
             var have_more = !!str.match(/<a [^>]*>\s*<span class="b-navigation__next\b/);
 
@@ -1562,7 +1566,7 @@
               }
 
               component.loading(false);
-            } else component.emptyForQuery(select_title);
+            } else if (authorization_required) component.empty(Lampa.Lang.translate('online_mod_authorization_required'));else component.emptyForQuery(select_title);
           });
         };
 
@@ -1671,7 +1675,7 @@
 
               component.loading(false);
             } else component.emptyForQuery(select_title);
-          } else component.emptyForQuery(select_title);
+          } else if (authorization_required) component.empty(Lampa.Lang.translate('online_mod_authorization_required'));else component.emptyForQuery(select_title);
         };
 
         var query_search = function query_search(query, data, callback) {
@@ -1680,6 +1684,8 @@
           network.timeout(10000);
           network_call(prox + url, function (str) {
             str = (str || '').replace(/\n/g, '');
+            var login_form = str.match(/<form id="check-form" class="check-form" method="post" action="\/ajax\/login\/">/);
+            authorization_required = !!login_form;
             var links = str.match(/<li><a href=.*?<\/li>/g);
             var have_more = str.indexOf('<a class="b-search__live_all"') !== -1;
             if (links && links.length) data = data.concat(links);
@@ -1763,7 +1769,7 @@
 
           if (extract.film_id) {
             getEpisodes(success);
-          } else component.emptyForQuery(select_title);
+          } else if (authorization_required) component.empty(Lampa.Lang.translate('online_mod_authorization_required'));else component.emptyForQuery(select_title);
         }, function (a, c) {
           component.empty(network.errorDecode(a, c));
         }, false, {
@@ -1793,6 +1799,8 @@
         extract.film_id = '';
         extract.favs = '';
         str = (str || '').replace(/\n/g, '');
+        var login_form = str.match(/<form id="check-form" class="check-form" method="post" action="\/ajax\/login\/">/);
+        authorization_required = !!login_form;
         var translation = str.match(/<h2>В переводе<\/h2>:<\/td>\s*(<td>.*?<\/td>)/);
         var cdnSeries = str.match(/\.initCDNSeriesEvents\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,/);
         var cdnMovie = str.match(/\.initCDNMoviesEvents\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,/);
@@ -4861,9 +4869,10 @@
 
       var prox2 = prox;
       var cookie = Lampa.Storage.get('online_mod_fancdn_cookie', '') + '';
-      if (cookie.indexOf('PHPSESSID=') == -1) cookie = 'PHPSESSID=' + Utils.randomHex(32) + (cookie ? '; ' + cookie : '');
 
       if (cookie) {
+        if (cookie.indexOf('PHPSESSID=') == -1) cookie = 'PHPSESSID=' + Utils.randomHex(32) + (cookie ? '; ' + cookie : '');
+
         if (Lampa.Platform.is('android')) {
           headers.Cookie = cookie;
         } else if (prox) {
@@ -4878,6 +4887,7 @@
         voice: 0,
         voice_name: ''
       };
+      var authorization_required = !cookie;
       /**
        * Начать поиск
        * @param {Object} _object
@@ -4981,7 +4991,7 @@
               component.similars(items);
               component.loading(false);
             } else component.emptyForQuery(select_title);
-          } else component.emptyForQuery(select_title);
+          } else if (authorization_required) component.empty(Lampa.Lang.translate('online_mod_authorization_required'));else component.emptyForQuery(select_title);
         };
 
         var url = embed + 'index.php?do=search';
@@ -5019,7 +5029,7 @@
               dataType: 'text',
               headers: headers2
             });
-          } else component.emptyForQuery(select_title);
+          } else if (authorization_required) component.empty(Lampa.Lang.translate('online_mod_authorization_required'));else component.emptyForQuery(select_title);
         }, function (a, c) {
           component.empty(network.errorDecode(a, c));
         }, false, {
@@ -15664,17 +15674,15 @@
         };
 
         var vcdn_search = function vcdn_search(fallback) {
-          if (!fallback) {
-            fallback = function fallback() {
-              display([]);
-            };
-          }
+          var error = function error() {
+            if (fallback) fallback();else display([]);
+          };
 
           vcdn_search_by_id(function (data) {
             if (data && data.length) display(data);else vcdn_search_by_title(function (data) {
-              if (data && data.length) display(data);else fallback();
-            }, fallback);
-          }, fallback);
+              if (data && data.length) display(data);else error();
+            }, error);
+          }, error);
         };
 
         var kp_search_by_title = function kp_search_by_title(callback, error) {
@@ -15692,17 +15700,15 @@
         };
 
         var kp_search = function kp_search(fallback) {
-          if (!fallback) {
-            fallback = function fallback() {
-              display([]);
-            };
-          }
+          var error = function error() {
+            if (fallback) fallback();else display([]);
+          };
 
           kp_search_by_id(function (data) {
             if (data && data.length) display(data);else kp_search_by_title(function (data) {
-              if (data && data.length) display(data);else fallback();
-            }, fallback);
-          }, fallback);
+              if (data && data.length) display(data);else error();
+            }, error);
+          }, error);
         };
 
         var vcdn_search_imdb = function vcdn_search_imdb() {
@@ -16475,7 +16481,7 @@
       };
     }
 
-    var mod_version = '26.10.2024';
+    var mod_version = '27.10.2024';
     console.log('App', 'start address:', window.location.href);
     var isMSX = !!(window.TVXHost || window.TVXManager);
     var isTizen = navigator.userAgent.toLowerCase().indexOf('tizen') !== -1;
@@ -16893,6 +16899,13 @@
         be: 'Запоўніць кукі для FanSerials',
         en: 'Fill cookie for FanSerials',
         zh: '为FanSerials填充Cookie'
+      },
+      online_mod_authorization_required: {
+        ru: 'Требуется авторизация',
+        uk: 'Потрібна авторизація',
+        be: 'Патрабуецца аўтарызацыя',
+        en: 'Authorization required',
+        zh: '需要授权'
       },
       online_mod_secret_password: {
         ru: 'Секретный пароль',
