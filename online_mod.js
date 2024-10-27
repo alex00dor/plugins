@@ -1,4 +1,4 @@
-//20.10.2024 - Fix
+//26.10.2024 - Fix
 
 (function () {
     'use strict';
@@ -490,7 +490,7 @@
         var fs = client_id && sentry_id && decode(client_id[1], sentry_id[1]);
 
         if (!fs) {
-          var fsv = str.match(/id="[^"]*" value='(\{[^']*)'/);
+          var fsv = str.match(/id="[^"]*" value='(\{"\d+":[^']*)'/);
           fs = fsv && fsv[1];
         }
 
@@ -538,6 +538,7 @@
 
             for (var a in files[i].json) {
               var elem = files[i].json[a];
+              if (_typeof(elem) !== 'object') continue;
 
               if (elem.folder) {
                 season_count++;
@@ -3010,7 +3011,9 @@
       var select_title = '';
       var prefer_http = Lampa.Storage.field('online_mod_prefer_http') === true;
       var prefer_dash = Lampa.Storage.field('online_mod_prefer_dash') === true;
-      var embed = (prefer_http ? 'http:' : 'https:') + '//api.ninsel.ws/embed/';
+      var host = (prefer_http ? 'http:' : 'https:') + '//api.ninsel.ws';
+      var ref = host + '/';
+      var embed = host + '/embed/';
       var embed2 = (prefer_http ? 'http:' : 'https:') + '//api.kinogram.best/embed/';
       var prox = component.proxy('collaps');
 
@@ -3022,6 +3025,8 @@
 
       if (prox) {
         prox += 'ip/';
+        stream_prox += 'param/Origin=' + encodeURIComponent(host) + '/';
+        stream_prox += 'param/Referer=' + encodeURIComponent(ref) + '/';
       }
 
       var filter_items = {};
@@ -15218,7 +15223,8 @@
         source: new cdnmovies(this, object),
         search: false,
         kp: true,
-        imdb: true
+        imdb: true,
+        disabled: disable_dbg
       }, {
         name: 'filmix',
         title: 'Filmix',
@@ -16068,6 +16074,11 @@
         scroll.clear();
         scroll.reset();
       };
+
+      this.inActivity = function () {
+        var body = $('body');
+        return !(body.hasClass('settings--open') || body.hasClass('menu--open') || body.hasClass('keyboard-input--visible') || body.hasClass('selectbox--open') || body.hasClass('search--open') || body.hasClass('ambience--enable') || $('div.modal').length);
+      };
       /**
        * Загрузка
        */
@@ -16076,7 +16087,7 @@
       this.loading = function (status) {
         if (status) this.activity.loader(true);else {
           this.activity.loader(false);
-          if (Lampa.Activity.active().activity === this.activity) this.activity.toggle();
+          if (Lampa.Activity.active().activity === this.activity && this.inActivity()) this.activity.toggle();
         }
       };
 
@@ -16438,7 +16449,7 @@
           },
           back: this.back
         });
-        Lampa.Controller.toggle('content');
+        if (this.inActivity()) Lampa.Controller.toggle('content');
       };
 
       this.render = function () {
@@ -16464,7 +16475,7 @@
       };
     }
 
-    var mod_version = '20.10.2024';
+    var mod_version = '26.10.2024';
     console.log('App', 'start address:', window.location.href);
     var isMSX = !!(window.TVXHost || window.TVXManager);
     var isTizen = navigator.userAgent.toLowerCase().indexOf('tizen') !== -1;
