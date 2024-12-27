@@ -11457,7 +11457,6 @@
     if (!Utils.isDebug()) {
       Lampa.Storage.set('online_mod_proxy_lumex', 'false');
       Lampa.Storage.set('online_mod_proxy_kinobase', 'false');
-      Lampa.Storage.set('online_mod_proxy_collaps', 'false');
       Lampa.Storage.set('online_mod_proxy_cdnmovies', 'false');
       Lampa.Storage.set('online_mod_proxy_fancdn', 'false');
       Lampa.Storage.set('online_mod_proxy_fanserials', 'false');
@@ -12498,10 +12497,10 @@
     }
 
     template += "\n    <div class=\"settings-param selector\" data-name=\"online_mod_proxy_rezka2\" data-type=\"toggle\">\n        <div class=\"settings-param__name\">#{online_mod_proxy_balanser} HDrezka</div>\n        <div class=\"settings-param__value\"></div>\n    </div>";
-
+    template += "\n    <div class=\"settings-param selector\" data-name=\"online_mod_proxy_collaps\" data-type=\"toggle\">\n        <div class=\"settings-param__name\">#{online_mod_proxy_balanser} Collaps</div>\n        <div class=\"settings-param__value\"></div>\n    </div>";
+      
     if (Utils.isDebug()) {
       template += "\n    <div class=\"settings-param selector\" data-name=\"online_mod_proxy_kinobase\" data-type=\"toggle\">\n        <div class=\"settings-param__name\">#{online_mod_proxy_balanser} Kinobase</div>\n        <div class=\"settings-param__value\"></div>\n    </div>";
-      template += "\n    <div class=\"settings-param selector\" data-name=\"online_mod_proxy_collaps\" data-type=\"toggle\">\n        <div class=\"settings-param__name\">#{online_mod_proxy_balanser} Collaps</div>\n        <div class=\"settings-param__value\"></div>\n    </div>";
       template += "\n    <div class=\"settings-param selector\" data-name=\"online_mod_proxy_cdnmovies\" data-type=\"toggle\">\n        <div class=\"settings-param__name\">#{online_mod_proxy_balanser} CDNMovies</div>\n        <div class=\"settings-param__value\"></div>\n    </div>";
       template += "\n    <div class=\"settings-param selector\" data-name=\"online_mod_proxy_filmix\" data-type=\"toggle\">\n        <div class=\"settings-param__name\">#{online_mod_proxy_balanser} Filmix</div>\n        <div class=\"settings-param__value\"></div>\n    </div>";
     }
