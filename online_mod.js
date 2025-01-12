@@ -1,4 +1,4 @@
-//22.12.2024 - Fix
+//07.01.2025 - Fix
 
 (function () {
     'use strict';
@@ -405,7 +405,7 @@
       var prefer_http = Lampa.Storage.field('online_mod_prefer_http') === true;
       var prefer_mp4 = Lampa.Storage.field('online_mod_prefer_mp4') === true;
       var prox = component.proxy('lumex');
-      var host = atob('aHR0cHM6Ly9wLmx1bWV4LmNsb3Vk');
+      var host = atob('aHR0cHM6Ly9wLmx1bWV4LnNwYWNl');
       var ref = host + '/';
       var user_agent = Utils.baseUserAgent();
       var headers = Lampa.Platform.is('android') ? {
@@ -439,7 +439,7 @@
       }
 
       var prox_enc2 = prox_enc;
-      var embed = atob('aHR0cHM6Ly9hcGkubHVtZXguY2xvdWQv');
+      var embed = atob('aHR0cHM6Ly9hcGkubHVtZXguc3BhY2Uv');
       var suffix = atob('Y2xpZW50SWQ9Q1dmS1hMYzFhaklkJmRvbWFpbj1tb3ZpZWxhYi5vbmUmdXJsPW1vdmllbGFiLm9uZQ==');
       var filter_items = {};
       var choice = {
@@ -4065,7 +4065,7 @@
       }
 
       var embed = 'http://filmixapp.cyou/api/v2/';
-      var site = 'https://filmix.fm/';
+      var site = 'https://filmix.quest/';
       var select_title = '';
       var prefer_http = Lampa.Storage.field('online_mod_prefer_http') === true;
       var filter_items = {};
@@ -5489,23 +5489,39 @@
       function filter() {
         filter_items = {
           season: [],
-          voice: []
+          season_num: [],
+          voice: [],
+          voice_info: []
         };
-        extract.forEach(function (s) {
-          if (s.folder) filter_items.season.push(s.title || s.comment || '');
+        extract.forEach(function (t) {
+          if (t.folder) {
+            for (var s_num in t.folder) {
+              if (filter_items.season_num.indexOf(s_num) == -1) filter_items.season_num.push(s_num);
+            }
+          }
+        });
+        filter_items.season_num.sort(function (a, b) {
+          return a - b;
+        });
+        filter_items.season_num.forEach(function (s_num) {
+          filter_items.season.push(Lampa.Lang.translate('torrent_serial_season') + ' ' + s_num);
         });
         if (!filter_items.season[choice.season]) choice.season = 0;
-        var s = extract[choice.season];
 
-        if (s && s.folder) {
-          s.folder.forEach(function (e) {
-            if (e.folder) {
-              e.folder.forEach(function (v) {
-                if (v.file) {
-                  var voice = v.title || v.comment || '';
-                  if (filter_items.voice.indexOf(voice) == -1) filter_items.voice.push(voice);
-                }
-              });
+        if (filter_items.season[choice.season]) {
+          var s_num = filter_items.season_num[choice.season];
+          extract.forEach(function (t) {
+            if (t.folder && t.folder[s_num]) {
+              var v_id = t.id || '';
+
+              if (!filter_items.voice_info.some(function (v) {
+                return v.id == v_id;
+              })) {
+                filter_items.voice.push(t.title || t.comment || '');
+                filter_items.voice_info.push({
+                  id: v_id
+                });
+              }
             }
           });
         }
@@ -5531,30 +5547,29 @@
         var filtred = [];
         extract.forEach(function (data) {
           if (data.folder) {
-            var s_title = data.title || data.comment || '';
+            var v_info = filter_items.voice_info[choice.voice];
 
-            if (s_title == filter_items.season[choice.season]) {
-              data.folder.forEach(function (e) {
-                if (e.folder) {
-                  var e_title = e.title || e.comment || '';
-                  e.folder.forEach(function (v) {
-                    var voice = v.title || v.comment || '';
+            if (v_info && data.id == v_info.id) {
+              var voice = filter_items.voice[choice.voice];
+              var s_num = filter_items.season_num[choice.season];
+              var s = data.folder[s_num] || {};
 
-                    if (v.file && voice == filter_items.voice[choice.voice]) {
-                      var episode_num = parseInt(e_title.match(/\d+/));
-                      var season_num = parseInt(s_title.match(/\d+/));
-                      filtred.push({
-                        title: component.formatEpisodeTitle(season_num, episode_num),
-                        quality: '360p ~ 1080p',
-                        info: ' / ' + Lampa.Utils.shortText(voice, 50),
-                        season: season_num,
-                        episode: episode_num,
-                        media: v
-                      });
-                    }
-                  });
+              if (s.folder) {
+                for (var e_num in s.folder) {
+                  var e = s.folder[e_num] || {};
+
+                  if (e.file) {
+                    filtred.push({
+                      title: component.formatEpisodeTitle(s_num, e_num),
+                      quality: '360p ~ 1080p',
+                      info: ' / ' + Lampa.Utils.shortText(voice, 50),
+                      season: parseInt(s_num),
+                      episode: parseInt(e_num),
+                      media: e
+                    });
+                  }
                 }
-              });
+              }
             }
           } else if (data.file) {
             filtred.push({
@@ -10030,6 +10045,7 @@
       var balanser = Lampa.Storage.get('online_mod_balanser', 'collaps') + '';
       var last_bls = Lampa.Storage.field('online_mod_save_last_balanser') === true ? Lampa.Storage.cache('online_mod_last_balanser', 200, {}) : {};
       var use_stream_proxy = Lampa.Storage.field('online_mod_use_stream_proxy') === true;
+      var rezka2_prx_ukr = '//' + (Lampa.Storage.field('online_mod_rezka2_prx_ukr') || 'prx.ukrtelcdn.net') + '/';
       var rezka2_fix_stream = Lampa.Storage.field('online_mod_rezka2_fix_stream') === true;
       var prefer_http = Lampa.Storage.field('online_mod_prefer_http') === true;
       var convert_vtt_to_srt = Lampa.Storage.field('online_mod_convert_vtt_to_srt') === true;
@@ -10063,7 +10079,7 @@
           if (name === 'lumex') return url;
 
           if (name === 'rezka2') {
-            return url.replace(/\/\/(stream\.voidboost\.(cc|top|link|club)|vdbmate.org|sambray.org|femeretes.org)\//, '//prx.ukrtelcdn.net/');
+            return url.replace(/\/\/(stream\.voidboost\.(cc|top|link|club)|[^\/]*.ukrtelcdn.net|vdbmate.org|sambray.org|femeretes.org)\//, rezka2_prx_ukr);
           }
 
           return (prefer_http ? 'http://apn.cfhttp.top/' : 'https://apn.watch/') + url;
@@ -11441,7 +11457,7 @@
       };
     }
 
-    var mod_version = '22.12.2024';
+    var mod_version = '07.01.2025';
     console.log('App', 'start address:', window.location.href);
     var isMSX = !!(window.TVXHost || window.TVXManager);
     var isTizen = navigator.userAgent.toLowerCase().indexOf('tizen') !== -1;
@@ -11513,6 +11529,13 @@
     Lampa.Params.select('online_mod_rezka2_name', '', '');
     Lampa.Params.select('online_mod_rezka2_password', '', '');
     Lampa.Params.select('online_mod_rezka2_cookie', '', '');
+    Lampa.Params.select('online_mod_rezka2_prx_ukr', {
+      'prx.ukrtelcdn.net': 'prx.ukrtelcdn.net',
+      'prx-cogent.ukrtelcdn.net': 'prx-cogent.ukrtelcdn.net',
+      'prx2-cogent.ukrtelcdn.net': 'prx2-cogent.ukrtelcdn.net',
+      'prx-ams.ukrtelcdn.net': 'prx-ams.ukrtelcdn.net',
+      'prx2-ams.ukrtelcdn.net': 'prx2-ams.ukrtelcdn.net'
+    }, 'prx.ukrtelcdn.net');
     Lampa.Params.select('online_mod_fancdn_name', '', '');
     Lampa.Params.select('online_mod_fancdn_password', '', '');
     Lampa.Params.select('online_mod_fancdn_cookie', '', '');
@@ -11845,6 +11868,13 @@
         en: 'Fix video stream for HDrezka',
         zh: '修复 HDrezka 的视频流'
       },
+      online_mod_rezka2_prx_ukr: {
+        ru: 'Прокси-сервер для HDrezka (Укр)',
+        uk: 'Проксі-сервер для HDrezka (Укр)',
+        be: 'Проксі-сервер для HDrezka (Укр)',
+        en: 'Proxy server for HDrezka (Ukr)',
+        zh: 'HDrezka 的代理服务器 （乌克兰）'
+      },
       online_mod_fancdn_name: {
         ru: 'Логин для FanSerials',
         uk: 'Логін для FanSerials',
@@ -11944,11 +11974,11 @@
         zh: '将设备添加到 Filmix'
       },
       online_mod_filmix_modal_text: {
-        ru: 'Введите его на странице https://filmix.fm/consoles в вашем авторизованном аккаунте!',
-        uk: 'Введіть його на сторінці https://filmix.fm/consoles у вашому авторизованому обліковому записі!',
-        be: 'Увядзіце яго на старонцы https://filmix.fm/consoles у вашым аўтарызаваным акаўнце!',
-        en: 'Enter it at https://filmix.fm/consoles in your authorized account!',
-        zh: '在您的授权帐户中的 https://filmix.fm/consoles 中输入！'
+        ru: 'Введите его на странице https://filmix.quest/consoles в вашем авторизованном аккаунте!',
+        uk: 'Введіть його на сторінці https://filmix.quest/consoles у вашому авторизованому обліковому записі!',
+        be: 'Увядзіце яго на старонцы https://filmix.quest/consoles у вашым аўтарызаваным акаўнце!',
+        en: 'Enter it at https://filmix.quest/consoles in your authorized account!',
+        zh: '在您的授权帐户中的 https://filmix.quest/consoles 中输入！'
       },
       online_mod_filmix_modal_wait: {
         ru: 'Ожидаем код',
@@ -12563,7 +12593,9 @@
       template += "\n    <div class=\"settings-param selector\" data-name=\"online_mod_fancdn_fill_cookie\" data-static=\"true\">\n        <div class=\"settings-param__name\">#{online_mod_fancdn_fill_cookie}</div>\n        <div class=\"settings-param__status\"></div>\n    </div>";
     }
 
-    template += "\n    <div class=\"settings-param selector\" data-name=\"online_mod_use_stream_proxy\" data-type=\"toggle\">\n        <div class=\"settings-param__name\">#{online_mod_use_stream_proxy}</div>\n        <div class=\"settings-param__value\"></div>\n    </div>\n    <div class=\"settings-param selector\" data-name=\"online_mod_proxy_find_ip\" data-type=\"toggle\">\n        <div class=\"settings-param__name\">#{online_mod_proxy_find_ip}</div>\n        <div class=\"settings-param__value\"></div>\n    </div>\n    <div class=\"settings-param selector\" data-name=\"online_mod_proxy_other\" data-type=\"toggle\">\n        <div class=\"settings-param__name\">#{online_mod_proxy_other}</div>\n        <div class=\"settings-param__value\"></div>\n    </div>\n    <div class=\"settings-param selector\" data-name=\"online_mod_proxy_other_url\" data-type=\"input\" placeholder=\"#{settings_cub_not_specified}\">\n        <div class=\"settings-param__name\">#{online_mod_proxy_other_url}</div>\n        <div class=\"settings-param__value\"></div>\n    </div>\n    <div class=\"settings-param selector\" data-name=\"online_mod_secret_password\" data-type=\"input\" data-string=\"true\" placeholder=\"#{settings_cub_not_specified}\">\n        <div class=\"settings-param__name\">#{online_mod_secret_password}</div>\n        <div class=\"settings-param__value\"></div>\n    </div>";
+    template += "\n    <div class=\"settings-param selector\" data-name=\"online_mod_use_stream_proxy\" data-type=\"toggle\">\n        <div class=\"settings-param__name\">#{online_mod_use_stream_proxy}</div>\n        <div class=\"settings-param__value\"></div>\n    </div>";
+    template += "\n    <div class=\"settings-param selector\" data-name=\"online_mod_rezka2_prx_ukr\" data-type=\"select\">\n        <div class=\"settings-param__name\">#{online_mod_rezka2_prx_ukr}</div>\n        <div class=\"settings-param__value\"></div>\n    </div>";
+    template += "\n    <div class=\"settings-param selector\" data-name=\"online_mod_proxy_find_ip\" data-type=\"toggle\">\n        <div class=\"settings-param__name\">#{online_mod_proxy_find_ip}</div>\n        <div class=\"settings-param__value\"></div>\n    </div>\n    <div class=\"settings-param selector\" data-name=\"online_mod_proxy_other\" data-type=\"toggle\">\n        <div class=\"settings-param__name\">#{online_mod_proxy_other}</div>\n        <div class=\"settings-param__value\"></div>\n    </div>\n    <div class=\"settings-param selector\" data-name=\"online_mod_proxy_other_url\" data-type=\"input\" placeholder=\"#{settings_cub_not_specified}\">\n        <div class=\"settings-param__name\">#{online_mod_proxy_other_url}</div>\n        <div class=\"settings-param__value\"></div>\n    </div>\n    <div class=\"settings-param selector\" data-name=\"online_mod_secret_password\" data-type=\"input\" data-string=\"true\" placeholder=\"#{settings_cub_not_specified}\">\n        <div class=\"settings-param__name\">#{online_mod_secret_password}</div>\n        <div class=\"settings-param__value\"></div>\n    </div>";
 
     if (Utils.isDebug()) {
       template += "\n    <div class=\"settings-param selector\" data-name=\"online_mod_av1_support\" data-type=\"toggle\">\n        <div class=\"settings-param__name\">#{online_mod_av1_support}</div>\n        <div class=\"settings-param__value\"></div>\n    </div>";
