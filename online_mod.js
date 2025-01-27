@@ -47,7 +47,7 @@
     }
 
     function isDebug() {
-      return decodeSecret([83, 81, 83, 67, 83]) === 'debug' && checkDebug();
+      return true;
     }
 
     function isDebug2() {
