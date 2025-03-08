@@ -1,4 +1,4 @@
-//19.02.2025 - Fix
+//08.03.2025 - Fix
 
 (function () {
     'use strict';
@@ -71,11 +71,11 @@
     }
 
     function fanserialsHost() {
-      return decodeSecret([89, 69, 64, 69, 67, 14, 26, 26, 67, 1, 31, 87, 85, 91, 67, 81, 71, 92, 81, 92, 31, 69, 66], atob('RnVja0Zhbg=='));
+      return decodeSecret([89, 69, 64, 69, 67, 14, 26, 26, 67, 4, 31, 87, 85, 91, 67, 81, 71, 92, 81, 92, 31, 69, 66], atob('RnVja0Zhbg=='));
     }
 
     function fancdnHost() {
-      return decodeSecret([89, 69, 64, 69, 67, 14, 26, 26, 91, 89, 95, 94, 83, 90, 30, 95, 79], atob('RnVja0Zhbg=='));
+      return fanserialsHost();
     }
 
     function filmixToken(dev_id, token) {
@@ -149,7 +149,7 @@
         if (name === 'redheadsound') return user_proxy2;
         if (name === 'anilibria') return user_proxy2;
         if (name === 'anilibria2') return user_proxy2;
-        if (name === 'animelib') return proxy_other ? proxy_secret : proxy_apn;
+        if (name === 'animelib') return proxy_secret;
         if (name === 'kodik') return user_proxy2;
         if (name === 'kinopub') return user_proxy2;
       }
@@ -299,8 +299,16 @@
       return randomChars('0123456789abcdef', len);
     }
 
-    function randomId(len) {
-      return randomChars('0123456789abcdefghijklmnopqrstuvwxyz', len);
+    function randomId(len, extra) {
+      return randomChars('0123456789abcdefghijklmnopqrstuvwxyz' + (extra || ''), len);
+    }
+
+    function randomId2(len, extra) {
+      return randomChars('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ' + (extra || ''), len);
+    }
+
+    function randomCookie() {
+      return atob('Y2ZfY2xlYXJhbmNlPQ==') + randomId2(43) + '-' + Math.floor(Date.now() / 1000) + atob('LTEuMi4xLjEt') + randomId2(299, '_.');
     }
 
     function checkAndroidVersion(needVersion) {
@@ -340,6 +348,8 @@
       randomChars: randomChars,
       randomHex: randomHex,
       randomId: randomId,
+      randomId2: randomId2,
+      randomCookie: randomCookie,
       checkAndroidVersion: checkAndroidVersion
     };
 
@@ -1088,7 +1098,7 @@
       extract.season_num = [];
       extract.media = [];
       var select_title = '';
-      var prefer_http = Lampa.Storage.field('online_mod_prefer_http') === true;
+      Lampa.Storage.field('online_mod_prefer_http') === true;
       var embed = atob('aHR0cHM6Ly9hcGkubGFtcGEuc3RyZWFtL2x1bWV4Lw==');
       var api_suffix = '/' + encodeURIComponent(btoa(window.location.href));
       var filter_items = {};
@@ -1354,54 +1364,25 @@
       function getStream(element, call, error) {
         if (element.stream) return call(element);
         if (!element.media.playlist) error();
-        lumex_api(embed + 'tok/' + encodeURIComponent(element.media.playlist) + api_suffix, function (json) {
-          if (json && json.host && json.headers) {
-            var url = component.fixLink(element.media.playlist, json.host);
-            network.clear();
-            network.timeout(10000);
-            network["native"](url, function (json) {
-              var url = component.fixLinkProtocol(json && json.url || '', prefer_http);
+        component.checkMyIp(function () {
+          var ip = Utils.getMyIp();
 
-              if (url) {
-                element.subtitles = false ;
-                var file = url;
-                var quality = false;
-
-                if (endsWith(url, 'hls.m3u8')) {
-                  var base_url = url.substring(0, url.length - 'hls.m3u8'.length);
-                  var max_quality = element.media.max_quality || 1080;
-                  var quality_list = [1080, 720, 480, 360, 240];
-                  var items = [];
-                  quality_list.forEach(function (q) {
-                    if (q <= max_quality) {
-                      items.push({
-                        label: q + 'p',
-                        quality: q,
-                        file: base_url + q + '.mp4'
-                      });
-                    }
-                  });
-
-                  if (items && items.length) {
-                    file = items[0].file;
-                    quality = {};
-                    items.forEach(function (item) {
-                      quality[item.label] = item.file;
-                    });
-                  }
-                }
-
-                element.stream = file;
-                element.qualitys = quality;
-                call(element);
-              } else error();
-            }, function (a, c) {
-              error();
-            }, {}, {
-              headers: json.headers
-            });
+          if (!ip) {
+            error();
+            return;
           }
-        }, error);
+
+          var api = embed + 'videos/' + object.movie.id + '/' + encodeURIComponent(element.media.playlist) + api_suffix;
+          api = Lampa.Utils.addUrlComponent(api, 'ip=' + encodeURIComponent(ip));
+          api = Lampa.Utils.addUrlComponent(api, 'title=' + encodeURIComponent(object.movie.title));
+          lumex_api(api, function (json) {
+            if (json && json.url) {
+              element.stream = json.url;
+              element.qualitys = json.qualitys || false;
+              call(element);
+            } else error();
+          }, error);
+        });
       }
       /**
        * Добавить видео
@@ -5036,10 +5017,12 @@
 
       var host2 = Utils.fancdnHost();
       var ref2 = host2 + '/';
+      var cookie2 = Utils.randomCookie();
       var headers2 = Lampa.Platform.is('android') ? {
         'Origin': host2,
         'Referer': ref2,
-        'User-Agent': user_agent
+        'User-Agent': user_agent,
+        'Cookie': cookie2
       } : {};
       var prox_enc2 = '';
 
@@ -5047,6 +5030,7 @@
         prox_enc2 += 'param/Origin=' + encodeURIComponent(host2) + '/';
         prox_enc2 += 'param/Referer=' + encodeURIComponent(ref2) + '/';
         prox_enc2 += 'param/User-Agent=' + encodeURIComponent(user_agent) + '/';
+        prox_enc2 += 'param/Cookie=' + encodeURIComponent(cookie2) + '/';
       }
 
       var cookie = Lampa.Storage.get('online_mod_fancdn_cookie', '') + '';
@@ -5674,10 +5658,12 @@
       var host = Utils.fancdnHost();
       var ref = host + '/';
       var user_agent = Utils.baseUserAgent();
+      var cookie = Utils.randomCookie();
       var headers = Lampa.Platform.is('android') ? {
         'Origin': host,
         'Referer': ref,
-        'User-Agent': user_agent
+        'User-Agent': user_agent,
+        'Cookie': cookie
       } : {};
       var prox_enc = '';
 
@@ -5685,6 +5671,7 @@
         prox_enc += 'param/Origin=' + encodeURIComponent(host) + '/';
         prox_enc += 'param/Referer=' + encodeURIComponent(ref) + '/';
         prox_enc += 'param/User-Agent=' + encodeURIComponent(user_agent) + '/';
+        prox_enc += 'param/Cookie=' + encodeURIComponent(cookie) + '/';
       }
 
       var embed = atob('aHR0cHM6Ly9mYW5jZG4ubmV0L2lmcmFtZS8=');
@@ -6645,30 +6632,18 @@
       var object = _object;
       var select_title = '';
       var prox = component.proxy('videoseed');
-      var embed = atob('aHR0cHM6Ly90di0yLWtpbm9zZXJpYWwubmV0Lw==');
+      var embed = atob('aHR0cHM6Ly92aWRlb3NlZWQudHYvYXBpLnBocA==');
+      var suffix = atob('dG9rZW49dW5kZWZpbmVk');
       var filter_items = {};
       var choice = {
         season: 0,
         voice: 0
       };
-
-      function videoseed_api_search(api, callback, error) {
-        network.clear();
-        network.timeout(10000);
-        network["native"](component.proxyLink(embed + api, prox), function (str) {
-          if (callback) callback(str || '');
-        }, function (a, c) {
-          if (error) error(network.errorDecode(a, c));
-        }, false, {
-          dataType: 'text'
-        });
-      }
       /**
        * Начать поиск
        * @param {Object} _object
        * @param {String} kinopoisk_id
        */
-
 
       this.search = function (_object, kinopoisk_id) {
         object = _object;
@@ -6684,10 +6659,27 @@
         };
 
         var error = component.empty.bind(component);
-        var api = 'api.php?kp_id=' + encodeURIComponent(kinopoisk_id);
-        videoseed_api_search(api, function (str) {
-          parse(str || '', empty);
-        }, error);
+        var api = embed;
+        api = Lampa.Utils.addUrlComponent(api, 'list=' + (object.movie.number_of_seasons ? 'serial' : 'movie'));
+        api = Lampa.Utils.addUrlComponent(api, suffix);
+        api = Lampa.Utils.addUrlComponent(api, 'kp=' + encodeURIComponent(kinopoisk_id));
+        network.clear();
+        network.timeout(10000);
+        network["native"](component.proxyLink(api, prox), function (json) {
+          if (json && json.data && json.data[0] && json.data[0].iframe) {
+            network.clear();
+            network.timeout(10000);
+            network["native"](component.proxyLink(json.data[0].iframe, prox), function (str) {
+              parse(str || '', empty);
+            }, function (a, c) {
+              error(network.errorDecode(a, c));
+            }, false, {
+              dataType: 'text'
+            });
+          } else empty();
+        }, function (a, c) {
+          error(network.errorDecode(a, c));
+        });
       };
 
       this.extendChoice = function (saved) {
@@ -10367,6 +10359,7 @@
 
       function decode(str) {
         try {
+          if (startsWith(str, 'http') || startsWith(str, '//')) return str;
           return atob(str.replace(/[a-z]/g, function (x) {
             return String.fromCharCode(x.charCodeAt(0) + (x > 'm' ? -13 : 13));
           }).replace(/[A-Z]/g, function (x) {
@@ -11286,6 +11279,33 @@
         return this.proxyStream(url, name);
       };
 
+      this.isDebug3 = function () {
+        var res = false;
+        var origin = window.location.origin || '';
+        Utils.decodeSecret([65, 68, 92, 74, 91, 84, 25, 65, 65, 15, 93, 87, 88, 73, 95, 70, 95, 83, 28, 87, 82, 13, 87, 64, 90, 84, 90, 70, 83, 26, 94, 88, 89, 80, 88, 80], atob('cHJpc21pc2hl')).split(';').forEach(function (s) {
+          res |= endsWith(origin, s);
+        });
+        return res;
+      };
+
+      this.checkMyIp = function (onComplite) {
+        var ip = Utils.getMyIp();
+
+        if (ip) {
+          onComplite();
+          return;
+        }
+
+        network.clear();
+        network.timeout(10000);
+        network.silent('https://api.ipify.org/?format=json', function (json) {
+          if (json.ip) Utils.setMyIp(json.ip);
+          onComplite();
+        }, function (a, c) {
+          onComplite();
+        });
+      };
+
       var last;
       var extended;
       var selected_id;
@@ -11312,7 +11332,8 @@
         source: new lumex2(this, object),
         search: false,
         kp: false,
-        imdb: true
+        imdb: true,
+        disabled: this.isDebug3()
       }, {
         name: 'rezka2',
         title: 'HDrezka',
@@ -11397,7 +11418,8 @@
         source: new videoseed(this, object),
         search: false,
         kp: true,
-        imdb: true
+        imdb: true,
+        disabled: disable_dbg
       }, {
         name: 'vibix',
         title: 'Vibix',
@@ -11500,6 +11522,11 @@
 
       if (filter_sources.indexOf(balanser) == -1) {
         balanser = default_balanser;
+
+        if (filter_sources.indexOf(balanser) == -1) {
+          balanser = filter_sources[0];
+        }
+
         Lampa.Storage.set('online_mod_balanser', balanser);
       }
 
@@ -12665,7 +12692,7 @@
       };
     }
 
-    var mod_version = '19.02.2025';
+    var mod_version = '08.03.2025';
     console.log('App', 'start address:', window.location.href);
     var isMSX = !!(window.TVXHost || window.TVXManager);
     var isTizen = navigator.userAgent.toLowerCase().indexOf('tizen') !== -1;
