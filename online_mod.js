@@ -1,4 +1,4 @@
-//15.03.2025 - Fix
+//02.04.2025 - Fix
 
 (function () {
     'use strict';
@@ -71,7 +71,7 @@
     }
 
     function fanserialsHost() {
-      return decodeSecret([89, 69, 64, 69, 67, 14, 26, 26, 67, 5, 31, 87, 85, 91, 67, 81, 71, 92, 81, 92, 31, 69, 66], atob('RnVja0Zhbg=='));
+      return decodeSecret([89, 69, 64, 69, 67, 14, 26, 26, 67, 8, 31, 87, 85, 91, 67, 81, 71, 92, 81, 92, 31, 69, 66], atob('RnVja0Zhbg=='));
     }
 
     function fancdnHost() {
@@ -144,7 +144,7 @@
         if (name === 'fancdn') return user_proxy3;
         if (name === 'fancdn2') return proxy_secret || user_proxy3;
         if (name === 'fanserials') return user_proxy2;
-        if (name === 'videoseed') return user_proxy2;
+        if (name === 'videoseed') return user_proxy1;
         if (name === 'vibix') return user_proxy2;
         if (name === 'redheadsound') return user_proxy2;
         if (name === 'anilibria') return user_proxy2;
@@ -1372,7 +1372,7 @@
             return;
           }
 
-          var api = embed + 'videos/' + object.movie.id + '/' + encodeURIComponent(element.media.playlist) + api_suffix;
+          var api = embed + 'play/' + object.movie.id + '/' + encodeURIComponent(element.media.playlist) + api_suffix;
           api = Lampa.Utils.addUrlComponent(api, 'ip=' + encodeURIComponent(ip));
           api = Lampa.Utils.addUrlComponent(api, 'title=' + encodeURIComponent(object.movie.title));
           lumex_api(api, function (json) {
@@ -3411,7 +3411,7 @@
             if (element.file) {
               var playlist = [];
               var first = {
-                url: element.file,
+                url: component.getDefaultQuality(null, element.file),
                 subtitles: element.subtitles,
                 translate: {
                   tracks: element.audio_tracks
@@ -3423,7 +3423,7 @@
               if (element.season) {
                 items.forEach(function (elem) {
                   playlist.push({
-                    url: elem.file,
+                    url: component.getDefaultQuality(null, elem.file),
                     subtitles: elem.subtitles,
                     translate: {
                       tracks: elem.audio_tracks
@@ -6652,7 +6652,7 @@
       var object = _object;
       var select_title = '';
       var prox = component.proxy('videoseed');
-      var embed = atob('aHR0cHM6Ly92aWRlb3NlZWQudHYvYXBpLnBocA==');
+      var embed = atob('aHR0cHM6Ly92aWRlb3NlZWQudHYvYXBpdjIucGhw');
       var suffix = Utils.decodeSecret([69, 91, 92, 84, 89, 5, 1, 85, 83, 83, 6, 5, 14, 4, 84, 92, 4, 85, 84, 9, 87, 13, 3, 85, 2, 9, 83, 87, 80, 83, 80, 81, 83, 2, 14, 12, 7, 2], atob('U2Vla1Rva2Vu'));
       var filter_items = {};
       var choice = {
@@ -6680,7 +6680,7 @@
 
         var error = component.empty.bind(component);
         var api = embed;
-        api = Lampa.Utils.addUrlComponent(api, 'list=' + (object.movie.number_of_seasons ? 'serial' : 'movie'));
+        api = Lampa.Utils.addUrlComponent(api, 'item=' + (object.movie.number_of_seasons ? 'serial' : 'movie'));
         api = Lampa.Utils.addUrlComponent(api, suffix);
         api = Lampa.Utils.addUrlComponent(api, 'kp=' + encodeURIComponent(kinopoisk_id));
         network.clear();
@@ -8524,7 +8524,7 @@
             if (element.file) {
               var playlist = [];
               var first = {
-                url: element.file,
+                url: component.getDefaultQuality(null, element.file),
                 timeline: element.timeline,
                 title: element.season ? element.title : select_title + (element.title == select_title ? '' : ' / ' + element.title)
               };
@@ -8532,7 +8532,7 @@
               if (element.season) {
                 items.forEach(function (elem) {
                   playlist.push({
-                    url: elem.file,
+                    url: component.getDefaultQuality(null, elem.file),
                     timeline: elem.timeline,
                     title: elem.title
                   });
@@ -11346,7 +11346,7 @@
         }
 
         if (url && rezka2_fix_stream && name === 'rezka2') {
-          return url.replace(/\/\/stream\.voidboost\.(cc|top|link|club)\//, '//femeretes.org/');
+          return url.replace(/\/\/(stream\.voidboost\.(cc|top|link|club)|[^\/]*.ukrtelcdn.net)\//, '//femeretes.org/');
         }
 
         return url;
@@ -12391,6 +12391,24 @@
       };
 
       this.getDefaultQuality = function (qualityMap, defValue) {
+        {
+          var needHackHlsLink = function needHackHlsLink(link) {
+            return link && endsWith(link, '.m3u8') && link.lastIndexOf('?') <= link.lastIndexOf('/');
+          };
+
+          if (qualityMap) {
+            for (var ID in qualityMap) {
+              if (needHackHlsLink(qualityMap[ID])) {
+                qualityMap[ID] += '?';
+              }
+            }
+          }
+
+          if (needHackHlsLink(defValue)) {
+            defValue += '?';
+          }
+        }
+
         if (qualityMap) {
           var preferably = forcedQuality;
 
@@ -12775,7 +12793,7 @@
       };
     }
 
-    var mod_version = '15.03.2025';
+    var mod_version = '02.04.2025';
     console.log('App', 'start address:', window.location.href);
     var isMSX = !!(window.TVXHost || window.TVXManager);
     var isTizen = navigator.userAgent.toLowerCase().indexOf('tizen') !== -1;
