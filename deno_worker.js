@@ -13,6 +13,10 @@ async function handle(request, connInfo) {
     async function handleRequest(request, connInfo) {
       const url = new URL(request.url);
       let api_pos = url.origin.length + 1;
+      const proxyPrefix = "/lampa-proxy/";
+      if (url.pathname.startsWith(proxyPrefix)) {
+         api_pos = url.origin.length + proxyPrefix.length;
+      }
       let api = url.href.substring(api_pos);
       let proxy_url = url.href;
       let proxy = "";
