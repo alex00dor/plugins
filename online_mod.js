@@ -1,4 +1,4 @@
-//02.05.2025 - Fix
+//03.06.2025 - Fix
 
 (function () {
     'use strict';
@@ -6682,7 +6682,7 @@
       var prox = component.proxy('videoseed');
       var user_agent = Utils.baseUserAgent();
       var embed = atob('aHR0cHM6Ly92aWRlb3NlZWQudHYvYXBpdjIucGhw');
-      var suffix = Utils.decodeSecret([69, 91, 92, 84, 89, 5, 1, 85, 83, 83, 6, 5, 14, 4, 84, 92, 4, 85, 84, 9, 87, 13, 3, 85, 2, 9, 83, 87, 80, 83, 80, 81, 83, 2, 14, 12, 7, 2], atob('U2Vla1Rva2Vu'));
+      var suffix = Utils.decodeSecret([69, 91, 92, 84, 89, 5, 87, 5, 87, 9, 8, 5, 1, 3, 7, 12, 87, 11, 9, 3, 1, 2, 84, 8, 86, 12, 85, 3, 5, 9, 7, 4, 83, 80, 14, 10, 80, 5], atob('U2Vla1Rva2Vu'));
       var headers = Lampa.Platform.is('android') ? {
         'User-Agent': user_agent
       } : {};
@@ -8119,12 +8119,24 @@
         network["native"](component.proxyLink(url, prox), function (str) {
           str = (str || '').replace(/\n/g, '');
           var player = str.match(/<div [^>]*id="visearch"[^>]*>[^<]*<iframe data-src="((https?:\/\/embed\.new\.video[^"\/]*)\/[^"]*)"/);
+          var player_link = player && player[1];
 
-          if (player) {
+          if (!player_link) {
+            var find = str.match(/\.create\('player',\s*({.*?})\s*\)/);
+            var json;
+
+            try {
+              json = find && (0, eval)('"use strict"; (function(){ return ' + find[1] + '; })();');
+            } catch (e) {}
+
+            player_link = json && json.url;
+          }
+
+          if (player_link) {
             network.clear();
             network.timeout(10000);
-            network["native"](component.proxyLink(player[1], prox, prox_enc), function (str) {
-              parse(str, player[1]);
+            network["native"](component.proxyLink(player_link, prox, prox_enc), function (str) {
+              parse(str);
             }, function (a, c) {
               component.empty(network.errorDecode(a, c));
             }, false, {
@@ -11378,7 +11390,7 @@
           if (name === 'lumex') return url;
 
           if (name === 'rezka2') {
-            return url.replace(/\/\/(stream\.voidboost\.(cc|top|link|club)|[^\/]*.ukrtelcdn.net|vdbmate.org|sambray.org|femeretes.org)\//, rezka2_prx_ukr);
+            return url.replace(/\/\/(stream\.voidboost\.(cc|top|link|club)|[^\/]*.ukrtelcdn.net|vdbmate.org|sambray.org|rumbegg.org|laptostack.org|frntroy.org|femeretes.org)\//, rezka2_prx_ukr);
           }
 
           return (prefer_http ? 'http://apn.cfhttp.top/' : 'https://apn.watch/') + url;
@@ -12832,7 +12844,7 @@
       };
     }
 
-    var mod_version = '02.05.2025';
+    var mod_version = '03.06.2025';
     console.log('App', 'start address:', window.location.href);
     var isMSX = !!(window.TVXHost || window.TVXManager);
     var isTizen = navigator.userAgent.toLowerCase().indexOf('tizen') !== -1;
@@ -12921,6 +12933,8 @@
       'prx.ukrtelcdn.net': 'prx.ukrtelcdn.net',
       'prx-cogent.ukrtelcdn.net': 'prx-cogent.ukrtelcdn.net',
       'prx2-cogent.ukrtelcdn.net': 'prx2-cogent.ukrtelcdn.net',
+      'prx3-cogent.ukrtelcdn.net': 'prx3-cogent.ukrtelcdn.net',
+      'prx4-cogent.ukrtelcdn.net': 'prx4-cogent.ukrtelcdn.net',
       'prx-ams.ukrtelcdn.net': 'prx-ams.ukrtelcdn.net',
       'prx2-ams.ukrtelcdn.net': 'prx2-ams.ukrtelcdn.net'
     }, 'prx.ukrtelcdn.net');
@@ -13467,7 +13481,7 @@
         return;
       }
 
-      var prox = Utils.proxy('fancdn');
+      var prox = Utils.proxy('cookie');
       var prox_enc = '';
       var returnHeaders = androidHeaders;
 
